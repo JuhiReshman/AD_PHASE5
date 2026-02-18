@@ -1,0 +1,91 @@
+# API Gateway Local Configuration
+server:
+  port: 9999
+
+spring:
+  application:
+    name: GATEWAY-API
+  
+  # File upload configuration for multipart requests
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+      file-size-threshold: 2KB
+ 
+  cloud:
+    gateway:
+      server:
+        webflux:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+
+        - id: PACKAGE-SERVICE
+          uri: lb://PACKAGE-SERVICE
+          predicates:
+            - Path=/api/packages/**
+          filters:
+            - StripPrefix=0
+            # Add filter to handle large file uploads
+            - name: RequestSize
+              args:
+                maxSize: 50MB
+
+        - id: PACKAGE-IMAGES
+          uri: lb://PACKAGE-SERVICE
+          predicates:
+            - Path=/api/packages/images/**
+          filters:
+            - StripPrefix=2
+            - RewritePath=/api/packages/images/(?<filename>.*), /uploads/packages/${filename}
+
+        - id: BOOKING-SERVICE
+          uri: lb://BOOKING-SERVICE
+          predicates:
+            - Path=/api/bookings/**
+          filters:
+            - StripPrefix=0
+
+        - id: PAYMENT-SERVICE
+          uri: lb://BOOKING-SERVICE
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - StripPrefix=0
+
+        - id: INSURANCE-SERVICE
+          uri: lb://INSURANCE-SERVICE
+          predicates:
+            - Path=/api/insurance/**
+          filters:
+            - StripPrefix=0
+
+        - id: ASSISTANCE-SERVICE
+          uri: lb://ASSISTANCE-SERVICE
+          predicates:
+            - Path=/api/assistance/**
+          filters:
+            - StripPrefix=0
+
+        - id: REVIEW-SERVICE
+          uri: lb://REVIEW-SERVICE
+          predicates:
+            - Path=/api/reviews/**
+          filters:
+            - StripPrefix=0
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
